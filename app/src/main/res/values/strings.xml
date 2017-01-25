@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Geolocalitzacio</string>
+    <string name="info_et_password">Introdueix la matricula aqui</string>
+    <string name="info_et_contraseña">Introduce la contraseña</string>
 </resources>

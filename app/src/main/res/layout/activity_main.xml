@@ -33,12 +33,12 @@
     <EditText
         android:layout_width="match_parent"
         android:inputType="textPersonName"
-        android:text="Introdueix la contrasenya aqui"
         android:ems="10"
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:id="@+id/editTextPassword"
+        android:hint="@string/info_et_contraseña"
         android:layout_height="50dp" />
 
     <TextView
@@ -54,12 +54,13 @@
     <EditText
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:inputType="textPersonName"
-        android:text="Introdueix la matricula aqui"
         android:ems="10"
         android:id="@+id/editTextMatricula"
         android:layout_below="@+id/textViewMatricula"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true" />
+        android:layout_alignParentStart="true"
+        android:hint="@string/info_et_password"
+        android:selectAllOnFocus="false"
+        android:inputType="textCapCharacters" />
 
 </RelativeLayout>

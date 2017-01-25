@@ -4,17 +4,23 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+import android.widget.Toast;
 
 
-public class AutobusDBHelper extends SQLiteOpenHelper{
+public class AutobusDBHelper extends SQLiteOpenHelper {
+
+
+    public static final int DATABASE_VERSION = 1;
+    public static final String DATABASE_NAME = "Horario.db";
     private String tabla = "AUTOBUSLOGIN";
-    private String CreacionTabla = "CREATE TABLE "+tabla+" (MATRICULA TEXT NOT NULL, PASSWORD TEXT NOT NULL";
-    private String InsercionTabla = "INSERT INTO "+tabla+" VALUES ('9999BBB', '1234');";
-    private String SelectTabla = "SELECT * FROM "+tabla+";";
+    private String CreacionTabla = "CREATE TABLE " + tabla + " (MATRICULA TEXT NOT NULL, PASSWORD TEXT NOT NULL)";
+    private String InsercionTabla = "INSERT INTO " + tabla + " VALUES ('9999BBB', '1234')";
+    private String SelectTabla = "SELECT * FROM " + tabla;
 
 
-    public AutobusDBHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
-        super(context, name, factory, version);
+    public AutobusDBHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
@@ -28,18 +34,20 @@ public class AutobusDBHelper extends SQLiteOpenHelper{
 
     }
 
-    public Boolean SelectBaseDatos(SQLiteDatabase db, String login, String Password) {
+    public boolean selectBaseDatos(String login, String password) {
 
 
-        Cursor c = db.rawQuery(SelectTabla + " WHERE MATRICULA LIKE "+login+" AND PASSWORD LIKE "+Password, null);
-
-        if (c.getCount() <= 0) {
-            c.close();
-            return false;
-
-        } else {
+        Cursor c = getReadableDatabase().rawQuery(SelectTabla + " WHERE MATRICULA LIKE ? AND PASSWORD LIKE ?", new String[]{login, password});
+        Log.i("info", "" + c.getCount() + login + password);
+        if (c.getCount() > 0) {
             c.close();
             return true;
+
+        } else {
+
+
+            c.close();
+            return false;
         }
     }
 

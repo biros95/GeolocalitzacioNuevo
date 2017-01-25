@@ -7,20 +7,24 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.example.marcosportatil.geolocalitzacio.baseDatos.AutobusDBHelper;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    private SQLiteDatabase db;
-    private String login;
-    private String password;
+
+
+    private AutobusDBHelper baseDatos;
+    private EditText matriculaEditText;
+    private EditText passwordEditText;
+
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        EditText matriculaEditText = (EditText) findViewById(R.id.editTextMatricula);
-        EditText passwordEditText = (EditText) findViewById(R.id.editTextPassword);
-        login = matriculaEditText.getText().toString();
-        password = passwordEditText.getText().toString();
-
+        matriculaEditText = (EditText) findViewById(R.id.editTextMatricula);
+        passwordEditText = (EditText) findViewById(R.id.editTextPassword);
+        baseDatos = new AutobusDBHelper(this);
 
 
         Button loginButton = (Button) findViewById(R.id.buttonLogin);
@@ -31,6 +35,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
 
+
+        if (baseDatos.selectBaseDatos(matriculaEditText.getText().toString(),
+                passwordEditText.getText().toString())) {
+            Toast toast = Toast.makeText(this, "Correcto", Toast.LENGTH_SHORT);
+            toast.show();
+        }
     }
 
 
