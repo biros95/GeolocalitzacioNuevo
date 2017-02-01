@@ -56,7 +56,7 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
         GoogleApiClient.ConnectionCallbacks, LocationListener {
     double lblLatitud = 0;
     double lblLongitud = 0;
-
+//Prueba de push
     @Override
     public void onCreate() {
         super.onCreate();
