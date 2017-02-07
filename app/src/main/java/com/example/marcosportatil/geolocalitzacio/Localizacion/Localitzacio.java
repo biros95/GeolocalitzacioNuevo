@@ -1,5 +1,7 @@
 package com.example.marcosportatil.geolocalitzacio.Localizacion;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -29,13 +31,24 @@ import android.os.Looper;
 import android.os.UserHandle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.Display;
 import android.widget.TextView;
 
+import com.example.marcosportatil.geolocalitzacio.MainActivity;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.identity.intents.Address;
 import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,10 +65,9 @@ import static com.google.android.gms.analytics.internal.zzy.e;
  * Created by ALUMNEDAM on 24/01/2017.
  */
 
-public class Localitzacio extends Service implements  GoogleApiClient.OnConnectionFailedListener,
-        GoogleApiClient.ConnectionCallbacks, LocationListener {
-    double lblLatitud = 0;
-    double lblLongitud = 0;
+public class Localitzacio extends Service implements  GoogleApiClient.OnConnectionFailedListener,GoogleApiClient.ConnectionCallbacks, LocationListener {
+    double latitudDoueble = 0;
+    double longitudDouble = 0;
 //Prueba de push 2
     @Override
     public void onCreate() {
@@ -73,40 +85,33 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
         return super.onStartCommand(intent, flags, startId);
     }
 
+    public Localitzacio() {
+    }
+
     //  String btnActualizar = (ToggleButton) findViewById(R.id.btnActualizar);
-    GoogleApiClient apiClient;
     private Location loc;
 
-    public Localitzacio(double lblLatitud, double lblLongitud) {
-        this.lblLatitud = lblLatitud;
-        this.lblLongitud = lblLongitud;
+    public Localitzacio(double latitudDoueble, double longitudDouble) {
+        this.latitudDoueble = latitudDoueble;
+        this.longitudDouble = longitudDouble;
     }
 
-    public double getLblLongitud() {
-        return lblLongitud;
+    public double getlongitudDouble() {
+        return longitudDouble;
     }
 
-    public void setLblLongitud(double lblLongitud) {
-        this.lblLongitud = lblLongitud;
+    public void setlongitudDouble(double longitudDouble) {
+        this.longitudDouble = longitudDouble;
     }
 
-    public void setLblLatitud(double lblLatitud) {
-        this.lblLatitud = lblLatitud;
+    public void setlatitudDoueble(double latitudDoueble) {
+        this.latitudDoueble = latitudDoueble;
     }
 
-    public double getLblLatitud() {
-        return lblLatitud;
+    public double getlatitudDoueble() {
+        return latitudDoueble;
     }
 
-    private void updateUI(Location loc) {
-        if (loc != null) {
-            //  lblLatitud = ("Latitud: " + String.valueOf(loc.getLatitude()));
-            //lblLongitud = ("Longitud: " + String.valueOf(loc.getLongitude()));
-        } else {
-            //  lblLatitud = ("Latitud: (desconocida)");
-            // lblLongitud = ("Longitud: (desconocida)");
-        }
-    }
 //ftvbh
     @Override
     public void onLocationChanged(Location loc) {
@@ -116,8 +121,8 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
         loc.getLongitude();
         String Text = "Mi ubicacon actual es: " + "\n Lat = "
                 + loc.getLatitude() + "\n Long = " + loc.getLongitude();
-        lblLatitud = loc.getLatitude();
-        lblLongitud = loc.getLongitude();
+        latitudDoueble = loc.getLatitude();
+        longitudDouble = loc.getLongitude();
         this.setLocation(loc);
     }
 
@@ -134,20 +139,168 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
 
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    private static final String LOGTAG = "android-localizacion";
+
+    private static final int PETICION_PERMISO_LOCALIZACION = 101;
+    private static final int PETICION_CONFIG_UBICACION = 201;
+
+    private GoogleApiClient apiClient;
+
+    private TextView lblLatitud;
+    private TextView lblLongitud;
+
+    private LocationRequest locRequest;
+
+
+
+    private void toggleLocationUpdates ( boolean enable){
+        if (enable) {
+            enableLocationUpdates();
+        } else {
+            disableLocationUpdates();
+        }
+    }
+
+    private void enableLocationUpdates () {
+
+        locRequest = new LocationRequest();
+        locRequest.setInterval(2000);
+        locRequest.setFastestInterval(1000);
+        locRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+
+        LocationSettingsRequest locSettingsRequest =
+                new LocationSettingsRequest.Builder()
+                        .addLocationRequest(locRequest)
+                        .build();
+
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(
+                        apiClient, locSettingsRequest);
+
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(LocationSettingsResult locationSettingsResult) {
+                final Status status = locationSettingsResult.getStatus();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+
+                        Log.i(LOGTAG, "Configuración correcta");
+                        startLocationUpdates();
+
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        Log.i(LOGTAG, "Se requiere actuación del usuario");
+                        //         status.startResolutionForResult(Localitzacio., PETICION_CONFIG_UBICACION);
+
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        Log.i(LOGTAG, "No se puede cumplir la configuración de ubicación necesaria");
+
+                        break;
+                }
+            }
+        });
+    }
+
+    private void disableLocationUpdates () {
+
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                apiClient, this);
 
     }
 
-    @Override
-    public void onConnectionSuspended(int i) {
+    private void startLocationUpdates () {
+        if (ActivityCompat.checkSelfPermission(Localitzacio.this,
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
+            //Ojo: estamos suponiendo que ya tenemos concedido el permiso.
+            //Sería recomendable implementar la posible petición en caso de no tenerlo.
+
+            Log.i(LOGTAG, "Inicio de recepción de ubicaciones");
+
+
+        }
     }
 
     @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    public void onConnectionFailed (ConnectionResult result){
+        //Se ha producido un error que no se puede resolver automáticamente
+        //y la conexión con los Google Play Services no se ha establecido.
 
+        Log.e(LOGTAG, "Error grave al conectar con Google Play Services");
     }
+
+    @Override
+    public void onConnected (@Nullable Bundle bundle){
+        //Conectado correctamente a Google Play Services
+
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+
+        } else {
+
+
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended ( int i){
+        //Se ha interrumpido la conexión con Google Play Services
+
+        Log.e(LOGTAG, "Se ha interrumpido la conexión con Google Play Services");
+    }
+
+    private void updateUI (Location loc){
+        if (loc != null) {
+            lblLatitud.setText("Latitud: " + String.valueOf(loc.getLatitude()));
+            lblLongitud.setText("Longitud: " + String.valueOf(loc.getLongitude()));
+        } else {
+            lblLatitud.setText("Latitud: (desconocida)");
+            lblLongitud.setText("Longitud: (desconocida)");
+        }
+    }
+
+
+    public void onRequestPermissionsResult ( int requestCode, String[] permissions,
+                                             int[] grantResults){
+        if (requestCode == PETICION_PERMISO_LOCALIZACION) {
+            if (grantResults.length == 1
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                //Permiso concedido
+
+                @SuppressWarnings("MissingPermission")
+                Location lastLocation =
+                        LocationServices.FusedLocationApi.getLastLocation(apiClient);
+
+                updateUI(lastLocation);
+
+            } else {
+                //Permiso denegado:
+                //Deberíamos deshabilitar toda la funcionalidad relativa a la localización.
+
+                Log.e(LOGTAG, "Permiso denegado");
+            }
+        }
+    }
+
+
+    protected void onActivityResult ( int requestCode, int resultCode, Intent data){
+        switch (requestCode) {
+            case PETICION_CONFIG_UBICACION:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        startLocationUpdates();
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        Log.i(LOGTAG, "El usuario no ha realizado los cambios de configuración necesarios");
+                        break;
+                }
+                break;
+        }
+    }
+
 }
 
 
