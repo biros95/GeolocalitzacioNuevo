@@ -56,7 +56,7 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
         GoogleApiClient.ConnectionCallbacks, LocationListener {
     double lblLatitud = 0;
     double lblLongitud = 0;
-//Prueba de push
+//Prueba de push 2
     @Override
     public void onCreate() {
         super.onCreate();
@@ -107,7 +107,7 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
             // lblLongitud = ("Longitud: (desconocida)");
         }
     }
-
+//ftvbh
     @Override
     public void onLocationChanged(Location loc) {
         // Este mŽtodo se ejecuta cada vez que el GPS recibe nuevas coordenadas
