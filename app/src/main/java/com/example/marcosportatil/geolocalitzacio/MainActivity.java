@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
                 startService(i);
                 if (isServiceRunning(Localitzacio.class)){
                     Toast.makeText(this,"Correcto", Toast.LENGTH_SHORT).show();
+                    System.out.println("ESTOY AQUI a1");
                 }
 
             } else {

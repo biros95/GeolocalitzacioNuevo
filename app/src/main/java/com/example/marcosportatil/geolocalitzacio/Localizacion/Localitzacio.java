@@ -55,9 +55,7 @@ public class Localitzacio extends Service {
 
     private LocationRequest locRequest;
 
-    public Localitzacio() {
 
-    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -68,6 +66,7 @@ public class Localitzacio extends Service {
     @Override
     public void onCreate() {
         Log.i("info", "estoy aqui");
+        System.out.println("ESTOY AQUI");
         super.onCreate();
         listener = new LocationListener() {
             @Override
