@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.support.annotation.MainThread;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -18,6 +19,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.marcosportatil.geolocalitzacio.MainActivity;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -45,7 +47,7 @@ public class Localitzacio extends Service {
     String date, matricula;
     private LocationManager locationManager;
     private LocationListener listener;
-
+    private Location loc;
     private GoogleApiClient apiClient;
 
     private TextView lblLatitud;
@@ -53,69 +55,57 @@ public class Localitzacio extends Service {
 
     private LocationRequest locRequest;
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    public Localitzacio() {
+
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    public Localitzacio() {
-    }
-
-    //  String btnActualizar = (ToggleButton) findViewById(R.id.btnActualizar);
-    private Location loc;
-
-    public Localitzacio(double latitud, double longitud) {
-        this.latitud = latitud;
-        this.longitud = longitud;
-    }
-
-    public double getLatitud() {
-        return latitud;
-    }
-
-    public void setLatitud(double latitud) {
-        this.latitud = latitud;
-    }
-
-    public double getLongitud() {
-        return longitud;
-    }
-
-    public void setLongitud(double longitud) {
-        this.longitud = longitud;
-    }
-
-    public void onLocationChanged(Location loc) {
-        //Inicializamos la clase interna
-        TareaAsincrona tareaAsincrona = new TareaAsincrona();
-        //Obtenemos latitud y longitud
-        latitud = loc.getLatitude();
-        longitud = loc.getLongitude();
-        //Obtenemos la fecha actual
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date today = Calendar.getInstance().getTime();
-        date = df.format(today);
-        //Metodo que inicia la clase interna con AsyncTask
-        tareaAsincrona.execute();
-    }
-
-    public void onStatusChanged(String provider, int status, Bundle extras) {
+        throw new UnsupportedOperationException("Not yet implemented");
 
     }
 
+    @Override
+    public void onCreate() {
+        Log.i("info", "estoy aqui");
+        super.onCreate();
+        listener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location loc) {
+                //Inicializamos la clase interna
+                TareaAsincrona tareaAsincrona = new TareaAsincrona();
+                //Obtenemos latitud y longitud
+                latitud = loc.getLatitude();
+                longitud = loc.getLongitude();
+                //Obtenemos la fecha actual
+                DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date today = Calendar.getInstance().getTime();
+                date = df.format(today);
+                //Metodo que inicia la clase interna con AsyncTask
+                tareaAsincrona.execute();
+            }
 
-    public void onProviderDisabled(String provider) {
-        Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(i);
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
 
 
+            public void onProviderEnabled(String s) {
+
+            }
+
+
+            public void onProviderDisabled(String provider) {
+                if (provider == "gps") {
+                    Toast.makeText(getApplicationContext(), "GPS is off", Toast.LENGTH_LONG).show();
+
+                    startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                }
+
+            }
+
+
+        };
         locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -129,8 +119,8 @@ public class Localitzacio extends Service {
             return;
         }
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, (android.location.LocationListener) listener);
-
     }
+
 
     /**
      * Metodo que inicia el Service, le llega un intent con los parametros llegados de la MainActivity
@@ -172,7 +162,7 @@ public class Localitzacio extends Service {
             //Inicializamos el tipo HttpClient
             HttpClient httpClient = new DefaultHttpClient();
             //Creamos un HttpPost con la IP de nuestro WebService para realizar los Insert Intos
-            HttpPost post = new HttpPost("http://192.168.120.81:8080/WebClientRest/webresources/generic");
+            HttpPost post = new HttpPost("http://192.168.1.133:8080/WebClientRest/webresources/generic");
             post.setHeader("content-type", "application/json");
             try {
                 //Creamos un objeto JSON
