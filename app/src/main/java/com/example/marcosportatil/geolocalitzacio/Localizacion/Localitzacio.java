@@ -1,74 +1,58 @@
 package com.example.marcosportatil.geolocalitzacio.Localizacion;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.Service;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.IntentSender;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.content.res.AssetManager;
-import android.content.res.Configuration;
-import android.content.res.Resources;
-import android.database.DatabaseErrorHandler;
-import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.location.Geocoder;
 import android.location.Location;
-import android.net.Uri;
+import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.UserHandle;
-import android.support.annotation.NonNull;
+import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.view.Display;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import com.example.marcosportatil.geolocalitzacio.MainActivity;
-import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.identity.intents.Address;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Locale;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
 
-import static com.google.android.gms.analytics.internal.zzy.e;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by ALUMNEDAM on 24/01/2017.
  */
 
-public class Localitzacio extends Service implements  GoogleApiClient.OnConnectionFailedListener,GoogleApiClient.ConnectionCallbacks, LocationListener {
-    double latitudDoueble = 0;
-    double longitudDouble = 0;
-//Prueba de push 2
+public class Localitzacio extends Service {
+    double latitud = 0;
+    double longitud = 0;
+    String date, matricula;
+    private LocationManager locationManager;
+    private LocationListener listener;
+
+    private GoogleApiClient apiClient;
+
+    private TextView lblLatitud;
+    private TextView lblLongitud;
+
+    private LocationRequest locRequest;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -80,228 +64,141 @@ public class Localitzacio extends Service implements  GoogleApiClient.OnConnecti
         return null;
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
-    }
-
     public Localitzacio() {
     }
 
     //  String btnActualizar = (ToggleButton) findViewById(R.id.btnActualizar);
     private Location loc;
 
-    public Localitzacio(double latitudDoueble, double longitudDouble) {
-        this.latitudDoueble = latitudDoueble;
-        this.longitudDouble = longitudDouble;
+    public Localitzacio(double latitud, double longitud) {
+        this.latitud = latitud;
+        this.longitud = longitud;
     }
 
-    public double getlongitudDouble() {
-        return longitudDouble;
+    public double getLatitud() {
+        return latitud;
     }
 
-    public void setlongitudDouble(double longitudDouble) {
-        this.longitudDouble = longitudDouble;
+    public void setLatitud(double latitud) {
+        this.latitud = latitud;
     }
 
-    public void setlatitudDoueble(double latitudDoueble) {
-        this.latitudDoueble = latitudDoueble;
+    public double getLongitud() {
+        return longitud;
     }
 
-    public double getlatitudDoueble() {
-        return latitudDoueble;
+    public void setLongitud(double longitud) {
+        this.longitud = longitud;
     }
 
-//ftvbh
-    @Override
     public void onLocationChanged(Location loc) {
-        // Este mŽtodo se ejecuta cada vez que el GPS recibe nuevas coordenadas
-        // debido a la deteccion de un cambio de ubicacion
-        loc.getLatitude();
-        loc.getLongitude();
-        String Text = "Mi ubicacon actual es: " + "\n Lat = "
-                + loc.getLatitude() + "\n Long = " + loc.getLongitude();
-        latitudDoueble = loc.getLatitude();
-        longitudDouble = loc.getLongitude();
-        this.setLocation(loc);
+        //Inicializamos la clase interna
+        TareaAsincrona tareaAsincrona = new TareaAsincrona();
+        //Obtenemos latitud y longitud
+        latitud = loc.getLatitude();
+        longitud = loc.getLongitude();
+        //Obtenemos la fecha actual
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date today = Calendar.getInstance().getTime();
+        date = df.format(today);
+        //Metodo que inicia la clase interna con AsyncTask
+        tareaAsincrona.execute();
     }
 
-    public void setLocation(Location loc) {
-        //Obtener la direcci—n de la calle a partir de la latitud y la longitud
-        if (loc.getLatitude() != 0.0 && loc.getLongitude() != 0.0) {
-            this.loc = loc;
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+
+    public void onProviderDisabled(String provider) {
+        Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(i);
+
+
+        locationManager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, (android.location.LocationListener) listener);
+
+    }
+
+    /**
+     * Metodo que inicia el Service, le llega un intent con los parametros llegados de la MainActivity
+     *
+     * @param intent
+     * @param flags
+     * @param startId
+     * @return
+     */
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Toast.makeText(this, "Iniciando servicio", Toast.LENGTH_SHORT).show();
+        matricula = intent.getStringExtra("matricula");
+        Toast.makeText(this, "" + matricula, Toast.LENGTH_SHORT).show();
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @SuppressWarnings("MissingPermission")
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (locationManager != null) {
+            locationManager.removeUpdates((android.location.LocationListener) listener);
+        }
+    }
+
+    class TareaAsincrona extends AsyncTask<Void, Void, Boolean> {
+
+        Button button;
+        Localitzacio localitzacio = new Localitzacio();
+
+        public TareaAsincrona() {
         }
 
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            //Boolean utilizado para saber si se ha insertado o no la ubicacion
+            boolean resul = true;
+            //Inicializamos el tipo HttpClient
+            HttpClient httpClient = new DefaultHttpClient();
+            //Creamos un HttpPost con la IP de nuestro WebService para realizar los Insert Intos
+            HttpPost post = new HttpPost("http://192.168.120.81:8080/WebClientRest/webresources/generic");
+            post.setHeader("content-type", "application/json");
+            try {
+                //Creamos un objeto JSON
+                JSONObject ubicacion = new JSONObject();
+                //Introducimos el objeto JSON los atributos que queremos que tenga
+                ubicacion.put("matricula", matricula);
+                ubicacion.put("latitud", latitud);
+                ubicacion.put("longitud", longitud);
+                ubicacion.put("data", date);
+                //Creamos un tipo StringEntity para convertir el JSON a String
+                StringEntity entity = new StringEntity(ubicacion.toString());
+                post.setEntity(entity);
+                //Creamos un HttpResponse para ejecutar la sentencia POST
+                HttpResponse resp = httpClient.execute(post);
+                String respStr = EntityUtils.toString(resp.getEntity());
 
-
-
-
-
-    }
-
-    private static final String LOGTAG = "android-localizacion";
-
-    private static final int PETICION_PERMISO_LOCALIZACION = 101;
-    private static final int PETICION_CONFIG_UBICACION = 201;
-
-    private GoogleApiClient apiClient;
-
-    private TextView lblLatitud;
-    private TextView lblLongitud;
-
-    private LocationRequest locRequest;
-
-
-
-    private void toggleLocationUpdates ( boolean enable){
-        if (enable) {
-            enableLocationUpdates();
-        } else {
-            disableLocationUpdates();
-        }
-    }
-
-    private void enableLocationUpdates () {
-
-        locRequest = new LocationRequest();
-        locRequest.setInterval(2000);
-        locRequest.setFastestInterval(1000);
-        locRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        LocationSettingsRequest locSettingsRequest =
-                new LocationSettingsRequest.Builder()
-                        .addLocationRequest(locRequest)
-                        .build();
-
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(
-                        apiClient, locSettingsRequest);
-
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-            @Override
-            public void onResult(LocationSettingsResult locationSettingsResult) {
-                final Status status = locationSettingsResult.getStatus();
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-
-                        Log.i(LOGTAG, "Configuración correcta");
-                        startLocationUpdates();
-
-                        break;
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        Log.i(LOGTAG, "Se requiere actuación del usuario");
-                        //         status.startResolutionForResult(Localitzacio., PETICION_CONFIG_UBICACION);
-
-                        break;
-                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        Log.i(LOGTAG, "No se puede cumplir la configuración de ubicación necesaria");
-
-                        break;
+                if (!respStr.equals("true")) {
+                    resul = true;
                 }
+
+
+            } catch (Exception e) {
+                Log.e("ServicioRest", "Error!", e);
+                resul = false;
             }
-        });
-    }
-
-    private void disableLocationUpdates () {
-
-        LocationServices.FusedLocationApi.removeLocationUpdates(
-                apiClient, this);
-
-    }
-
-    private void startLocationUpdates () {
-        if (ActivityCompat.checkSelfPermission(Localitzacio.this,
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            //Ojo: estamos suponiendo que ya tenemos concedido el permiso.
-            //Sería recomendable implementar la posible petición en caso de no tenerlo.
-
-            Log.i(LOGTAG, "Inicio de recepción de ubicaciones");
-
-
+            return resul;
         }
     }
-
-    @Override
-    public void onConnectionFailed (ConnectionResult result){
-        //Se ha producido un error que no se puede resolver automáticamente
-        //y la conexión con los Google Play Services no se ha establecido.
-
-        Log.e(LOGTAG, "Error grave al conectar con Google Play Services");
-    }
-
-    @Override
-    public void onConnected (@Nullable Bundle bundle){
-        //Conectado correctamente a Google Play Services
-
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-
-        } else {
-
-
-        }
-    }
-
-    @Override
-    public void onConnectionSuspended ( int i){
-        //Se ha interrumpido la conexión con Google Play Services
-
-        Log.e(LOGTAG, "Se ha interrumpido la conexión con Google Play Services");
-    }
-
-    private void updateUI (Location loc){
-        if (loc != null) {
-            lblLatitud.setText("Latitud: " + String.valueOf(loc.getLatitude()));
-            lblLongitud.setText("Longitud: " + String.valueOf(loc.getLongitude()));
-        } else {
-            lblLatitud.setText("Latitud: (desconocida)");
-            lblLongitud.setText("Longitud: (desconocida)");
-        }
-    }
-
-
-    public void onRequestPermissionsResult ( int requestCode, String[] permissions,
-                                             int[] grantResults){
-        if (requestCode == PETICION_PERMISO_LOCALIZACION) {
-            if (grantResults.length == 1
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                //Permiso concedido
-
-                @SuppressWarnings("MissingPermission")
-                Location lastLocation =
-                        LocationServices.FusedLocationApi.getLastLocation(apiClient);
-
-                updateUI(lastLocation);
-
-            } else {
-                //Permiso denegado:
-                //Deberíamos deshabilitar toda la funcionalidad relativa a la localización.
-
-                Log.e(LOGTAG, "Permiso denegado");
-            }
-        }
-    }
-
-
-    protected void onActivityResult ( int requestCode, int resultCode, Intent data){
-        switch (requestCode) {
-            case PETICION_CONFIG_UBICACION:
-                switch (resultCode) {
-                    case Activity.RESULT_OK:
-                        startLocationUpdates();
-                        break;
-                    case Activity.RESULT_CANCELED:
-                        Log.i(LOGTAG, "El usuario no ha realizado los cambios de configuración necesarios");
-                        break;
-                }
-                break;
-        }
-    }
-
 }
-
-
-
