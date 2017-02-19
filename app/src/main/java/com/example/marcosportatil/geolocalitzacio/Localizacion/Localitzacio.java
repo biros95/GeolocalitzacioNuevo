@@ -88,7 +88,9 @@ public class Localitzacio extends Service {
                 Date today = Calendar.getInstance().getTime();
                 date = df.format(today);
                 //Metodo que inicia la clase interna con AsyncTask
+                Log.i("Estoy aqui", "OnLocationChanged");
                 tareaAsincrona.execute();
+
             }
 
 
@@ -139,26 +141,28 @@ public class Localitzacio extends Service {
     public void onDestroy() {
         super.onDestroy();
         if (locationManager != null) {
-            locationManager.removeUpdates((android.location.LocationListener) listener);
+            locationManager.removeUpdates(listener);
         }
     }
 
     class TareaAsincrona extends AsyncTask<Void, Void, Boolean> {
 
-        Button button;
-        Localitzacio localitzacio = new Localitzacio();
+
 
         public TareaAsincrona() {
+            Log.i ("TareaAsincrona ", "");
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
+            Log.i ("doInBackground ", "");
             //Boolean utilizado para saber si se ha insertado o no la ubicacion
             boolean resul = true;
             //Inicializamos el tipo HttpClient
             HttpClient httpClient = new DefaultHttpClient();
             //Creamos un HttpPost con la IP de nuestro WebService para realizar los Insert Intos
-            HttpPost post = new HttpPost("http://192.168.1.133:8080/WebClientRest/webresources/generic");
+            HttpPost post = new HttpPost("http://192.168.1.133:8080/WebService2/webresources/mapas");
+
             post.setHeader("content-type", "application/json");
             try {
                 //Creamos un objeto JSON
@@ -177,6 +181,7 @@ public class Localitzacio extends Service {
 
                 if (!respStr.equals("true")) {
                     resul = true;
+                    Log.i ("Es correcta ", "el sql");
                 }
 
 
