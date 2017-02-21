@@ -52,6 +52,7 @@ import android.support.annotation.Nullable;
  */
 
 public class Localitzacio extends Service {
+    //Variables
     double latitud = 0;
     double longitud = 0;
     String date, matricula;
@@ -71,6 +72,10 @@ public class Localitzacio extends Service {
         return null;
     }
 
+    /*
+     * Metodod onCreate para instanciar locationListener,la clase de que implementa AsyncTask,
+     * y obtener la latitud y longuitud.
+     */
     @Override
     public void onCreate() {
         Log.i("info", "estoy aqui");
@@ -136,6 +141,7 @@ public class Localitzacio extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
     @SuppressWarnings("MissingPermission")
     @Override
     public void onDestroy() {
@@ -153,6 +159,9 @@ public class Localitzacio extends Service {
             Log.i ("TareaAsincrona ", "");
         }
 
+        /*
+         * Metodo con AsyncTask para insertar en la base de datos.
+         */
         @Override
         protected Boolean doInBackground(Void... params) {
             Log.i ("doInBackground ", "");
@@ -178,7 +187,7 @@ public class Localitzacio extends Service {
                 //Creamos un HttpResponse para ejecutar la sentencia POST
                 HttpResponse resp = httpClient.execute(post);
                 String respStr = EntityUtils.toString(resp.getEntity());
-
+                //Comprueba q es correcto.
                 if (!respStr.equals("true")) {
                     resul = true;
                     Log.i ("Es correcta ", "el sql");

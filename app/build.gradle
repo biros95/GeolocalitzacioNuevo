@@ -37,3 +37,7 @@ dependencies {
         compile.exclude group: "org.apache.httpcomponents", module: "httpclient"
     }
 }
+dependencies {
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'com.android.support.test.espresso:espresso-core:2.2.2'
+}
